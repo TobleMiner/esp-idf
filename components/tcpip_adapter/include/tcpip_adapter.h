@@ -193,8 +193,12 @@ typedef struct tcpip_adatper_ip_lost_timer_s {
  * @brief  Initialize tcpip adapter
  *
  * This will initialize TCPIP stack inside.
+ *
+ * @return ESP_OK
+ *         ESP_ERR_INVALID_STATE
+ *         ERR_MEM
  */
-void tcpip_adapter_init(void);
+esp_err_t tcpip_adapter_init(void);
 
 /**
  * @brief  Start the ethernet interface with specific MAC and IP

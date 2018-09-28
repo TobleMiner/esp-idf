@@ -95,7 +95,7 @@ static void tcpip_adapter_dhcps_cb(u8_t client_ip[4])
     esp_event_send(&evt);
 }
 
-void tcpip_adapter_init(void)
+esp_err_t tcpip_adapter_init(void)
 {
     int ret;
 
@@ -113,13 +113,20 @@ void tcpip_adapter_init(void)
         ret = sys_sem_new(&api_sync_sem, 0);
         if (ERR_OK != ret) {
             ESP_LOGE(TAG, "tcpip adatper api sync sem init fail");
+            return ret;
         }
 
         ret = sys_sem_new(&api_lock_sem, 1);
         if (ERR_OK != ret) {
             ESP_LOGE(TAG, "tcpip adatper api lock sem init fail");
+            sys_sem_free(&api_sync_sem);
+            return ret;
         }
+
+        return ESP_OK;
     }
+
+    return ESP_ERR_INVALID_STATE;
 }
 
 static inline netif_init_fn tcpip_if_to_netif_init_fn(tcpip_adapter_if_t tcpip_if)
