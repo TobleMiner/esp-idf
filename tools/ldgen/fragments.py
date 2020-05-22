@@ -289,6 +289,7 @@ class Mapping(Fragment):
                 obj = None
                 symbol = None
                 scheme = None
+                emit = None
 
                 try:
                     obj = result["object"]
@@ -305,22 +306,39 @@ class Mapping(Fragment):
                 except KeyError:
                     pass
 
-                self.entries.add((obj, symbol, scheme))
+                try:
+                    emit = result["emit"]
+                except KeyError:
+                    pass
+
+                keep = "keep" in result
+
+                self.entries.add((obj, symbol, scheme, emit, keep))
 
     def get_key_grammars(self):
         # There are three possible patterns for mapping entries:
-        #       obj:symbol (scheme)
-        #       obj (scheme)
-        #       * (scheme)
+        #       obj:symbol (scheme) flags
+        #       obj (scheme) flags
+        #       * (scheme) flags
+        # Where valid patterns for flags are:
+        #       
+        #       emit(name)
+        #       keep
+        #       emit(name) keep
+        #       keep emit(name)
         obj = Fragment.ENTITY.setResultsName("object")
         symbol = Suppress(":") + Fragment.IDENTIFIER.setResultsName("symbol")
         scheme = Suppress("(") + Fragment.IDENTIFIER.setResultsName("scheme") + Suppress(")")
+        flag_emit = Optional(Suppress("emit(") + Fragment.IDENTIFIER.setResultsName("emit") + Suppress(")"))
+        flag_keep = Optional(Literal("keep").setResultsName("keep"))
 
         pattern1 = obj + symbol + scheme
         pattern2 = obj + scheme
         pattern3 = Literal(Mapping.MAPPING_ALL_OBJECTS).setResultsName("object") + scheme
 
-        entry = pattern1 | pattern2 | pattern3
+        flags = flag_emit & flag_keep
+
+        entry = (pattern1 | pattern2 | pattern3) + flags
 
         grammars = {
             "archive": KeyGrammar(Fragment.ENTITY.setResultsName("archive"), 1, 1, True),
